@@ -1,0 +1,187 @@
+# Multimodal RAG System: Technical Documentation Assistant
+
+## System Overview
+
+This multimodal RAG (Retrieval-Augmented Generation) system combines document search, image processing, and AI generation to provide technical answers with supporting evidence. The system is implemented with Python and Azure cloud services, optimized for both the vehicle documentation use case and general document processing pipelines.
+
+## Core Components
+
+### 1. Document Processing Pipeline (`services/document_extractor.py`)
+
+**Functionality**:
+- Processes PDFs and images from blob storage
+- Extracts text, tables, images, and warnings using Azure Form Recognizer
+- Builds relationships between content elements
+- Outputs structured JSON with content chunks and metadata
+
+**Key Methods**:
+- `extract_documents()`: Main processing pipeline
+- `_process_single_document()`: Handles individual documents
+- `_build_relationships()`: Creates connections between content elements
+
+**Optimizations**:
+- Parallel processing with ThreadPoolExecutor
+- Dynamic batching for image analysis
+- Memory-efficient streaming for large files
+
+### 2. Search Index Management (`services/index_manager.py`)
+
+**Functionality**:
+- Creates and configures Azure Cognitive Search index
+- Defines vector search and semantic search capabilities
+- Handles index schema with multiple content types
+
+**Key Methods**:
+- `create_or_update_index()`: Main index configuration
+- `_get_index_fields()`: Defines searchable fields
+- `_get_vector_search_config()`: Sets up vector search
+
+**Optimizations**:
+- Custom vector search profiles
+- Hybrid search configuration
+- Field-specific analyzers
+
+### 3. Data Indexing Service (`services/data_indexer.py`)
+
+**Functionality**:
+- Processes extracted documents into search index
+- Generates embeddings using Azure OpenAI
+- Indexes content with relationships
+
+**Key Methods**:
+- `index_documents()`: Main indexing pipeline
+- `_prepare_search_documents()`: Creates index-ready documents
+- `_generate_embeddings_with_retry()`: Handles embedding generation
+
+**Optimizations**:
+- Batch processing with error handling
+- Dynamic throttling based on success rate
+- Parallel embedding generation
+
+## Multimodal RAG Workflow
+
+### 1. Query Processing (`app.py` and `services/multimodal_agent.py`)
+
+**Flow**:
+1. User submits query (text + optional images)
+2. System generates query embedding
+3. Performs vector + hybrid search
+4. Processes results with relationships
+5. Generates multimodal response
+
+**Key Files**:
+- `multimodal_agent.py`: Orchestrates RAG pipeline
+- `llm_service.py`: Handles multimodal prompt construction
+- `search_service.py`: Manages search operations
+
+### 2. Response Generation (`services/llm_service.py`)
+
+**Methods**:
+- `generate_response()`: Main response handler
+- `_build_multimodal_prompt()`: Constructs GPT-4o prompts
+- `_process_context()`: Extracts relevant content
+
+**Multimodal Features**:
+- Text and image processing
+- Technical answer formatting
+- Source attribution
+
+## Tools and Technologies
+
+### Core Stack:
+- **Azure Cognitive Search**: Vector + hybrid search
+- **Azure Blob Storage**: Document storage
+- **Azure OpenAI**: GPT-4 and embeddings
+- **Python 3.10+**: Backend implementation
+- **Streamlit**: Web interface
+
+### Processing Tools:
+- Azure Form Recognizer: Document extraction
+- PyMuPDF (fitz): PDF image extraction
+- LangChain: LLM orchestration
+
+## Optimization Techniques
+
+### Across All Components:
+
+1. **Performance**:
+   - Parallel processing with ThreadPools
+   - Batch operations for Azure services
+   - Async I/O operations
+
+2. **Resource Management**:
+   - Streaming downloads/uploads
+   - Memory-efficient processing
+   - Connection pooling
+
+3. **Reliability**:
+   - Exponential backoff retries
+   - Comprehensive error handling
+   - Circuit breaker patterns
+
+### Specific to Vehicle App:
+
+1. **Domain-Specific**:
+   - Custom prompt engineering
+   - Technical relationship mapping
+   - Safety warning extraction
+
+2. **Multimodal**:
+   - Base64 image encoding
+   - Cross-content references
+   - Visual-textual alignment
+
+## Running the System
+
+### Full Pipeline Execution:
+
+1. **Document Processing**:
+   ```bash
+   python services/document_extractor.py
+   ```
+
+2. **Index Setup**:
+   ```bash
+   python services/index_manager.py
+   ```
+
+3. **Data Indexing**:
+   ```bash
+   python services/data_indexer.py
+   ```
+
+4. **Run Application**:
+   ```bash
+   streamlit run app.py
+   ```
+
+## Customization Guide
+
+### For General Document Processing:
+
+1. Update `document_extractor.py`:
+   - Modify content extraction logic
+   - Adjust relationship rules
+
+2. Configure `index_manager.py`:
+   - Change field definitions
+   - Update vector search parameters
+
+3. Adapt `llm_service.py`:
+   - Modify prompt templates
+   - Adjust content processing
+
+## Monitoring and Scaling
+
+### Key Metrics to Monitor:
+- Embedding generation latency
+- Search query performance
+- LLM token usage
+- Blob storage throughput
+
+### Scaling Recommendations:
+- Increase search replicas during peak loads
+- Implement caching for frequent queries
+- Use premium blob tiers for hot documents
+
+This architecture provides a complete multimodal RAG solution that can be adapted for various document processing needs beyond vehicle documentation, with particular strengths in technical content and visual-textual relationships.
